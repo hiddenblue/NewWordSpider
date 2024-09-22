@@ -1,0 +1,8 @@
+{
+  "API_URL": "https://api.deepseek.com/chat/completions",
+  "API_KEY": "",
+  "USER_DICT_PATH": "./flypy_user.txt",
+  "USER_DICT_DB_PATH": "./flypy_user.db",
+  "SPLIT_WORDS_MODE": "deepseek",
+  "LOGGING_LEVEL": "INFO"
+}
