@@ -9,6 +9,7 @@ from Crawler import fetch_new_sentences, RebangParser
 from Tokenizer import LLM_Split_words
 import asyncio
 from logger_config import setup_logger, inspect_trace
+import time
 
 # 配置日志系统
 logger = setup_logger()
@@ -19,6 +20,7 @@ with open(config_path, 'r') as f:
     config = json.load(f)
 
 SPLIT_WORDS_MODE = config.get('SPLIT_WORDS_MODE')
+RUN_INTERVAL = config.get('run_interval', 86400)  # 默认每天运行一次
 
 # 读取之前的词集合
 user_dict_path = Path(config.get('USER_DICT_PATH'))
@@ -91,7 +93,6 @@ def process_new_words(new_words_set):
 
 async def main():
     if SPLIT_WORDS_MODE == 'deepseek':
-
         new_words_set = await LLM_Split_words(new_sentences_list)
     else:
         new_words_set = set()
@@ -107,5 +108,9 @@ async def main():
 
 # 示例用法
 if __name__ == "__main__":
-    # 为了异步运行
-    asyncio.run(main())
+    while True:
+        asyncio.run(main())
+        if os.getenv('GITHUB_ACTIONS'):
+            exit(0)
+        logger.info(f"Sleeping for {RUN_INTERVAL} seconds...")
+        time.sleep(RUN_INTERVAL)
