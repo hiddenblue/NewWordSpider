@@ -1,0 +1,20 @@
+# 排除版本控制系统文件
+.git/
+.gitignore
+.svn/
+.hg/
+
+# 排除临时文件
+*.swp
+*.swo
+*.tmp
+
+# 排除日志文件
+*.log
+
+# 排除缓存文件
+__pycache__/
+*.pyc
+
+# 排除开发工具文件
+.vscode/

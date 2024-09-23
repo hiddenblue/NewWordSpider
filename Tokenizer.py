@@ -16,9 +16,6 @@ config_path = os.path.join(os.path.dirname(__file__), 'config.json')
 with open(config_path, 'r') as f:
     config = json.load(f)
 
-LLM_API_URL = config.get('LLM_API_URL')
-LLM_API_KEY = config.get('LLM_API_KEY')
-
 if os.getenv('GITHUB_ACTIONS'):
     logger.info("Running in GitHub Actions environment")
     LLM_API_URL = os.getenv('LLM_API_URL')

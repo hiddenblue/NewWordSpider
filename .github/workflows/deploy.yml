@@ -1,81 +1,84 @@
 name: Deploy NewWordSpider
 
+# 触发条件：当推送到 main 分支或按计划执行时触发
 on:
   push:
     branches:
-      - main  # 或者你希望触发部署的分支名称
+      - main  # 触发部署的分支名称
   schedule:
     - cron: '16 16 * * *'  # 每天午夜执行
 
 jobs:
+  # 测试任务
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 运行在最新的 Ubuntu 系统上
     steps:
-      - name: Checkout repository
+      - name: Checkout repository  # 检出仓库
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python  # 设置 Python 环境
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11'  # 根据你的项目需求设置 Python 版本
+          python-version: '3.11'  # 设置 Python 版本
 
-      - name: Install dependencies
+      - name: Install dependencies  # 安装依赖项
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest  # 安装 pytest
 
-      - name: Run tests
+      - name: Run tests  # 运行测试
         run: |
           echo "Skipping tests"  # 直接通过测试
 
+  # 部署任务
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 运行在最新的 Ubuntu 系统上
     needs: test  # 确保测试通过后再执行部署
     steps:
-      - name: Checkout source repository
+      - name: Checkout source repository  # 检出源仓库
         uses: actions/checkout@v4
         with:
-          repository: hiddenblue/ActionStorage
-          path: ActionStorage
-          token: ${{ secrets.PAT_TOKEN }}
+          repository: hiddenblue/ActionStorage  # 源仓库地址
+          path: ActionStorage  # 源仓库路径
+          token: ${{ secrets.PAT_TOKEN }}  # 使用个人访问令牌
 
-      - name: Checkout target repository
+      - name: Checkout target repository  # 检出目标仓库
         uses: actions/checkout@v4
         with:
-          path: target-repo
-          token: ${{ secrets.PAT_TOKEN }}
+          path: target-repo  # 目标仓库路径
+          token: ${{ secrets.PAT_TOKEN }}  # 使用个人访问令牌
 
-      - name: Set up Python
+      - name: Set up Python  # 设置 Python 环境
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11'  # 根据你的项目需求设置 Python 版本
+          python-version: '3.11'  # 设置 Python 版本
 
-      - name: Install dependencies
+      - name: Install dependencies  # 安装依赖项
         run: |
-          ls
-          ls ..
-          pwd
-          tree -L 1
-          cd target-repo
+          ls  # 列出当前目录内容
+          ls ..  # 列出上级目录内容
+          pwd  # 打印当前工作目录
+          tree -L 1  # 显示目录结构
+          cd target-repo  # 切换到目标仓库目录
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set environment variables
+      - name: Set environment variables  # 设置环境变量
         run: |
           echo "LLM_API_URL=${{ secrets.LLM_API_URL }}" >> $GITHUB_ENV
           echo "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" >> $GITHUB_ENV
-      
-      - name: Copy from ActionStorage
+
+      - name: Copy from ActionStorage  # 从 ActionStorage 复制文件
         run: |
-          ls 
-          pwd
-          ls ..
-          cd target-repo
+          ls  # 列出当前目录内容
+          pwd  # 打印当前工作目录
+          ls ..  # 列出上级目录内容
+          cd target-repo  # 切换到目标仓库目录
           cp  ../ActionStorage/flypy_user.txt ./flypy_user.txt
           cp  ../ActionStorage/flypy_user.db ./flypy_user.db
 
-      - name: Create empty artifacts if not exist
+      - name: Create empty artifacts if not exist  # 如果文件不存在，创建空文件
         run: |
           cd target-repo
           if [ ! -f ./flypy_user.txt ]; then
@@ -85,47 +88,51 @@ jobs:
             touch ./flypy_user.db  # 创建空的 SQLite 数据库文件
           fi
 
-      - name: Run NewWordSpider
+      - name: Run NewWordSpider  # 运行 NewWordSpider
         run: |
           cd target-repo
           python main.py
 
-      - name: Upload artifacts
+      - name: Upload artifacts  # 上传生成的 flypy_user.txt 文件
         uses: actions/upload-artifact@v4
         with:
           name: flypy_user.txt
           path: |
             target-repo/flypy_user.txt
-            
-      - name: Upload artifacts
+
+      - name: Upload artifacts  # 上传生成的 flypy_user.db 文件
         uses: actions/upload-artifact@v4
         with:
           name: flypy_user.db
           path: |
             target-repo/flypy_user.db
-            
-      - name: Copy to ActionStorage
+
+      - name: Copy to ActionStorage  # 将生成的文件复制到 ActionStorage
         run: |
-          ls 
-          pwd
-          ls ..
+          ls  # 列出当前目录内容
+          pwd  # 打印当前工作目录
+          ls ..  # 列出上级目录内容
           cd target-repo
           cp ./flypy_user.txt ../ActionStorage/flypy_user.txt
           cp ./flypy_user.db ../ActionStorage/flypy_user.db 
 
-      - name: Commit and push changes to ActionStorage
+      - name: Commit and push changes to ActionStorage  # 提交并推送更改到 ActionStorage
         run: |
           cd ActionStorage
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add .
           git commit -m "Automated upload of artifacts"
-          git push origin main  # 使用 main 分支
+          git push origin main  # 推送到 main 分支
           echo ${{ github.head_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - id: get-version
+      - uses: actions/checkout@v4  # 检出当前仓库
+        with:
+          fetch-depth: 0  # 包含所有分支和标签的所有历史记录
+
+      - id: get-version  # 获取版本号
         uses: im-open/git-version-lite@v3.1.0
         with:
           calculate-prerelease-version: true
@@ -134,14 +141,14 @@ jobs:
           fallback-to-no-prefix-search: true
           default-release-type: major
 
-      - name: Commit and push version number
+      - name: Commit and push version number  # 提交并推送版本号
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "chore: update version to ${{ steps.get-version.outputs.NEXT_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - name: Create tag
+      - name: Create tag  # 创建标签
         uses: actions/github-script@v6
         with:
           script: |

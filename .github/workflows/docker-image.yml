@@ -1,0 +1,50 @@
+name: Docker Image CI
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 触发构建的标签格式
+  release:
+    types: [published]  # 当发布新版本时触发
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/newwordspider:latest
+          labels: |
+            org.opencontainers.image.title=${{ github.event.repository.name }}
+            org.opencontainers.image.description="A Python application for processing new words"
+            org.opencontainers.image.version=${{ github.event.repository.default_branch }}
+            org.opencontainers.image.authors=${{ github.actor }}
+          platforms: linux/amd64,linux/arm64  # 支持多个平台
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Logout from Docker Hub
+        if: always()
+        uses: docker/login-action@v2
+        with:
+          logout: true
