@@ -15,7 +15,7 @@ def setup_logger():
         level=log_level,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('app.log'),
+            logging.FileHandler('app.log', encoding='utf-8'),
             logging.StreamHandler()
         ]
     )
@@ -28,9 +28,9 @@ logger = setup_logger()
 def inspect_trace():
     traceback = inspect.trace()
     skip_first_frame = True
-    for frame, _ in traceback:
-        info = inspect.getframeinfo(frame)
+    for frame_info in traceback:
         if skip_first_frame:
             skip_first_frame = False
             continue
-        logger.error(f"File: {info.filename}, Line: {info.lineno}, Function: {info.function}")
+        info = frame_info.frame.f_code
+        logger.error(f"File: {info.co_filename}, Line: {frame_info.lineno}, Function: {info.co_name}")

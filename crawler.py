@@ -33,8 +33,8 @@ class RebangParser(BaseParser):
         :param response_data: 响应数据
         :return: 解析后的句子列表
         """
-        list_data = json.loads(response_data['data']['list'])
-        return [item['title'] for item in list_data]
+        sentence_list = [item.get('title') for item in response_data if item.get('title')] + [item.get("desc") for item in response_data if item.get("desc")]
+        return [item.strip() for item in sentence_list]
 
 
 class AnotherParser(BaseParser):
@@ -91,7 +91,7 @@ def fetch_new_sentences(api_url: str, params: dict, parser: BaseParser) -> list[
 
         if total_page > 1:
             # 遍历所有页
-            for page in range(1, total_page + 1):
+            for page in range(2, total_page + 1):
                 params['page'] = page
                 response = requests.get(api_url, params=params, headers=headers)
 
@@ -104,7 +104,7 @@ def fetch_new_sentences(api_url: str, params: dict, parser: BaseParser) -> list[
                     list_data.extend(json.loads(data['data']['list']))
                 else:
                     logger.error(f"请求第 {page} 页失败，状态码: {response.status_code}")
-        return parser.parse(data)
+        return parser.parse(list_data)
     else:
         logger.error(f"请求失败，状态码: {response.status_code}")
         return []

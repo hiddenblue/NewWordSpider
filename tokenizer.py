@@ -6,7 +6,7 @@ import aiohttp
 import asyncio
 from typing import List, Set
 
-from logger_config import setup_logger
+from logger_config import setup_logger, inspect_trace
 
 # 配置日志系统
 logger = setup_logger()
@@ -16,8 +16,8 @@ config_path = os.path.join(os.path.dirname(__file__), 'config.json')
 with open(config_path, 'r') as f:
     config = json.load(f)
 
-API_URL = config.get('API_URL')
-API_KEY = config.get('API_KEY')
+LLM_API_URL = config.get('LLM_API_URL')
+LLM_API_KEY = config.get('LLM_API_KEY')
 
 exclude_words = [
     '的', '了', '和', '或', '与', '在', '更', '这', '是', '不']
@@ -40,7 +40,7 @@ async def deepseek_tokenizer(sentence: str, session: aiohttp.ClientSession) -> L
     # 请求头
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
+        "Authorization": f"Bearer {LLM_API_KEY}"
     }
 
     # 请求数据
@@ -56,7 +56,7 @@ async def deepseek_tokenizer(sentence: str, session: aiohttp.ClientSession) -> L
 
     try:
         # 发送请求
-        async with session.post(API_URL, headers=headers, data=json.dumps(data)) as response:
+        async with session.post(LLM_API_URL, headers=headers, data=json.dumps(data)) as response:
             response.raise_for_status()  # 检查请求是否成功
 
             # 解析响应数据
@@ -74,6 +74,7 @@ async def deepseek_tokenizer(sentence: str, session: aiohttp.ClientSession) -> L
         return []
     except Exception as e:
         logger.error(f"发生未知错误: {e}")
+        inspect_trace()
         return []
 
 def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int = 8) -> Set[str]:

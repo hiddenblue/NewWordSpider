@@ -79,9 +79,11 @@ def process_new_words(new_words_set):
     append_result = file_handler.append_dict(new_user_dict, add_date_comment=True)
 
     if append_result:
-        logger.info("新词条已成功追加到词库文件。")
+        logger.info(f"{len(new_user_dict)} 个新词条已成功追加到词库文件当中。")
+        logger.info("本次运行结束")
     else:
         logger.error("追加新词条到词库文件时发生错误。")
+        logger.error("本次运行结束")
 
 
 async def main():
