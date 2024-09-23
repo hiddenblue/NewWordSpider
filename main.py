@@ -57,7 +57,7 @@ def process_new_words(new_words_set):
         try:
             full_pinyin = word_get_pinyin(word)
             xiaohe_pinyin = [quanpin_to_xiaohe(item) for item in full_pinyin]
-            logger.info(f"{xiaohe_pinyin}")
+            logger.debug(f"{xiaohe_pinyin}")
         except Exception as e:
             logger.error(f"Error processing word '{word}': {e}")
             inspect_trace()
@@ -67,7 +67,11 @@ def process_new_words(new_words_set):
         rimeentry = RimeEntry(''.join(xiaohe_pinyin), 1)
         if word not in old_user_dict:
             new_user_dict[word] = rimeentry
-
+            
+    logger.info(f"{new_words_set}")
+    for item in new_user_dict:
+        logger.info(f"{item}: {new_user_dict[item]}")
+        
     # 保存到SQLite数据库
     if not os.path.exists(user_dict_db_path):
         # 初次运行，备份老用户词典的数据到数据库中，后面只需要追加新词

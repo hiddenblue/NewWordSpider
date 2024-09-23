@@ -1,7 +1,5 @@
 import json
-
 import requests
-
 from logger_config import setup_logger
 
 # 配置日志系统

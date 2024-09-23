@@ -55,7 +55,7 @@ def word_get_pinyin(word: str) -> List[str]:
     try:
         # 使用 pypinyin 获取拼音列表
         pinyin_list = pinyin(word, style=Style.NORMAL, heteronym=True)
-        logger.info(f"{word} {pinyin_list}")
+        logger.debug(f"{word} {pinyin_list}")
 
         # 返回拼音列表
         return [item[0] for item in pinyin_list]
