@@ -1,11 +1,12 @@
+import logging
 import os
 import json
 import jieba
 from pathlib import Path
 from RimeHandler import RimeFileHandler, RimeSQLiteHandler, RimeEntry
 from PinyinTools import quanpin_to_xiaohe, word_get_pinyin
-from crawler import fetch_new_sentences, RebangParser
-from tokenizer import LLM_Split_words
+from Crawler import fetch_new_sentences, RebangParser
+from Tokenizer import LLM_Split_words
 import asyncio
 from logger_config import setup_logger, inspect_trace
 
@@ -17,8 +18,6 @@ config_path = os.path.join(os.path.dirname(__file__), 'config.json')
 with open(config_path, 'r') as f:
     config = json.load(f)
 
-LLM_API_URL = config.get('LLM_API_URL')
-LLM_API_KEY = config.get('LLM_API_KEY')
 SPLIT_WORDS_MODE = config.get('SPLIT_WORDS_MODE')
 
 # 读取之前的词集合
@@ -67,11 +66,11 @@ def process_new_words(new_words_set):
         rimeentry = RimeEntry(''.join(xiaohe_pinyin), 1)
         if word not in old_user_dict:
             new_user_dict[word] = rimeentry
-            
+
     logger.info(f"{new_words_set}")
     for item in new_user_dict:
         logger.info(f"{item}: {new_user_dict[item]}")
-        
+
     # 保存到SQLite数据库
     if not os.path.exists(user_dict_db_path):
         # 初次运行，备份老用户词典的数据到数据库中，后面只需要追加新词
@@ -92,9 +91,7 @@ def process_new_words(new_words_set):
 
 async def main():
     if SPLIT_WORDS_MODE == 'deepseek':
-        if not LLM_API_KEY:
-            logger.error("API_KEY is empty, please set it in config.json")
-            exit(-1)
+
         new_words_set = await LLM_Split_words(new_sentences_list)
     else:
         new_words_set = set()

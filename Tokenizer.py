@@ -19,8 +19,34 @@ with open(config_path, 'r') as f:
 LLM_API_URL = config.get('LLM_API_URL')
 LLM_API_KEY = config.get('LLM_API_KEY')
 
+if os.getenv('GITHUB_ACTIONS'):
+    logger.info("Running in GitHub Actions environment")
+    LLM_API_URL = os.getenv('LLM_API_URL')
+    LLM_API_KEY = os.getenv('LLM_API_KEY')
+
+    if not LLM_API_KEY:
+        logger.error("github actions LLM_API_KEY is empty, please set it in config.json")
+        exit(-1)
+
+    if not isinstance(LLM_API_URL, str):
+        raise ValueError("LLM_API_URL must be a string")
+
+    if not isinstance(LLM_API_KEY, str):
+        raise ValueError("LLM_API_KEY must be a string")
+
+    logger.info(f"LLM_API_URL: {LLM_API_URL}")
+    logger.info("read api url and key from github actions successfully!")
+else:
+    LLM_API_URL = config.get('LLM_API_URL')
+    LLM_API_KEY = config.get('LLM_API_KEY')
+
 exclude_words = [
     '的', '了', '和', '或', '与', '在', '更', '这', '是', '不']
+
+if not LLM_API_KEY:
+    logger.error("LLM_API_KEY is empty, please set it in config.json")
+    exit(-1)
+
 
 async def jieba_tokenizer(sentence: str) -> List[str]:
     """
@@ -29,6 +55,7 @@ async def jieba_tokenizer(sentence: str) -> List[str]:
     :return: 分词结果列表
     """
     return jieba.lcut(sentence)
+
 
 async def deepseek_tokenizer(sentence: str, session: aiohttp.ClientSession) -> List[str]:
     """
@@ -77,6 +104,7 @@ async def deepseek_tokenizer(sentence: str, session: aiohttp.ClientSession) -> L
         inspect_trace()
         return []
 
+
 def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int = 8) -> Set[str]:
     """
     过滤出符合长度要求的中文词
@@ -90,7 +118,7 @@ def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int 
         if "·" in word:
             word = word.replace("·", "")
         if re.match(r"[\u4e00-\u9fa5]+", word) and min_length <= len(word) <= max_length:
-            
+
             add_word = True
             for i in exclude_words:
                 if i in word:
@@ -98,16 +126,18 @@ def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int 
                     break
             if word.startswith("一"):
                 add_word = False
-                
+
             # 判断word里面是否有数字，有则跳过
             if re.search(r"\d", word):
                 add_word = False
-                
-            if add_word :
+
+            if add_word:
                 filtered_words.add(word)
     return filtered_words
 
-async def tokenize_and_filter(sentence: str, tokenizer_func, *args, min_length: int = 2, max_length: int = 8) -> Set[str]:
+
+async def tokenize_and_filter(sentence: str, tokenizer_func, *args, min_length: int = 2, max_length: int = 8) -> Set[
+    str]:
     """
     通用分词和过滤接口
     :param sentence: 输入句子
@@ -120,11 +150,13 @@ async def tokenize_and_filter(sentence: str, tokenizer_func, *args, min_length: 
     words = await tokenizer_func(sentence, *args)
     return filter_chinese_words(words, min_length, max_length)
 
+
 async def LLM_Split_words(sentence_list: List[str]) -> Set[str]:
     async with aiohttp.ClientSession() as session:
         tasks = [tokenize_and_filter(sentence, deepseek_tokenizer, session) for sentence in sentence_list]
-        results = await asyncio.gather(*tasks) 
+        results = await asyncio.gather(*tasks)
     return set.union(*results)
+
 
 async def main():
     sentence_list = [
@@ -144,6 +176,7 @@ async def main():
 
     for i, result in enumerate(results):
         logger.info(f"句子 {i + 1} 的分词结果: {result}")
+
 
 # 示例用法
 if __name__ == "__main__":
