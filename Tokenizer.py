@@ -45,6 +45,25 @@ if not LLM_API_KEY:
     exit(-1)
 
 
+"""
+unicode_list = [
+    ("逗号", "，", "\uFF0C"),
+    ("句号", "。", "\u3002"),
+    ("问号", "？", "\uFF1F"),
+    ("感叹号", "！", "\uFF01"),
+    ("冒号", "：", "\uFF1A"),
+    ("分号", "；", "\uFF1B"),
+    ("引号", "“”、‘’", "\u201C\u201D\u3001\u2018\u2019"),
+    ("括号", "（）、【】、《》", "\uFF08\uFF09\u3001\u3010\u3011\u300A\u300B"),
+    ("省略号", "……", "\u2026\u2026"),
+    ("顿号", "、", "\u3001"),
+    ("连接号", "—", "\u2014"),
+    ("破折号", "——", "\u2014\u2014"),
+    ("书名号", "《》", "\u300A\u300B")
+]
+"""
+
+
 async def jieba_tokenizer(sentence: str) -> List[str]:
     """
     使用jieba进行分词
@@ -111,12 +130,17 @@ def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int 
     :return: 符合要求的中文词集合
     """
     filtered_words = set()
+    # add some branch to remove space around and in the words
     for word in words:
         if "·" in word:
             word = word.replace("·", "")
-        if re.match(r"[\u4e00-\u9fa5]+", word) and min_length <= len(word) <= max_length:
+        if " " in word:
+            word=word.replace(" ", "")
+        if re.match(r"^[\u4e00-\u9fa5\s]+$", word
+                    ) and min_length <= len(word) <= max_length:
 
             add_word = True
+
             for i in exclude_words:
                 if i in word:
                     add_word = False
@@ -126,6 +150,17 @@ def filter_chinese_words(words: List[str], min_length: int = 2, max_length: int 
 
             # 判断word里面是否有数字，有则跳过
             if re.search(r"\d", word):
+                add_word = False
+
+            # 检查是否包含英文字母
+            if re.search(r"[a-zA-Z]", word):
+                add_word = False
+
+            # 专门匹配中文标点符号的正则表达式
+            unicode_pattern = re.compile(
+                r"[\uFF0C\u3002\uFF1F\uFF01\uFF1A\uFF1B\u201C\u201D\u3001\u2018\u2019\uFF08\uFF09\u3010\u3011\u300A\u300B\u2026\u3001\u2014\u300A\u300B]"
+            )
+            if bool(unicode_pattern.search(word)):
                 add_word = False
 
             if add_word:
@@ -156,6 +191,9 @@ async def LLM_Split_words(sentence_list: List[str]) -> Set[str]:
 
 
 async def main():
+
+
+
     sentence_list = [
         "2.5亿美元打造游戏史首个变性黑人！揭秘《星鸣特攻》究竟是如何“正确”地走向暴死的",
         "1k出头！锐度报表！全画幅75mm F2，质感满满的国货之光，铭匠光学75 F2到底咋样？",

@@ -28,8 +28,30 @@
 
 <img src="./misc/rime20240923-123653.png" width="600" height="300" />
 
-其中windows的rime用户词库位于用户home目录下的特定位置
-"C:\Users\用户名\AppData\Roaming\Rime"
+其中windows的rime用户词库位于用户home目录下的特定位置。
+
+linux则根据你使用rime框架基于fcitx或者ibus等框架，位于不同的目录当中
+
+```
+# windows
+%USERPROFILE%\AppData\Roaming\Rime
+
+# linux
+
+# fcitx
+$HOME/.config/fcitx/rime
+
+# ibus
+$HOME/.config/ibus/rime
+```
+
+本项目action每天运行一次，将新词保存到ActionStorage中，
+
+生成的用户词典和数据位于该项目下 [ActionStorage](https://github.com/hiddenblue/ActionStorage)
+
+![rime20240924_190219.png](misc/rime20240924_190219.png)
+
+当前约有76K词汇，欢迎订阅定期更新
 
 ## 2. 项目结构
 
