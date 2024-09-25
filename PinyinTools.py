@@ -3,13 +3,13 @@ from typing import Dict, List
 from pypinyin import pinyin, Style
 from logger_config import setup_logger
 
-
 # 配置日志系统
 logger = setup_logger()
 
 # 小鹤双拼映射表
 xiaohe_map: Dict[str, str] = {
-    'a': 'a', 'o': 'o', 'u': 'u', 'i': 'i', 'e': 'e', 'iu': 'q', 'uan': 'r', 'ue': 't', 'un': 'y',
+    'a': 'a', 'o': 'o', 'u': 'u', 'i': 'i', 'e': 'e',
+    'iu': 'q', 'uan': 'r', 'ue': 't', 've': 't', 'un': 'y',
     'sh': 'u', 'ch': 'i', 'uo': 'o', 'ie': 'p', 'iong': 's', 'ong': 's',
     'ai': 'd', 'en': 'f', 'eng': 'g', 'ang': 'h', 'an': 'j', 'ing': 'k',
     'uai': 'k', 'iang': 'l', 'uang': 'l', "ou": 'z', 'ia': 'x', 'ua': 'x',
@@ -42,12 +42,12 @@ def quanpin_to_xiaohe(quan_pinyin: str) -> str:
             if quan_pinyin[:2] in xiaohe_map:
                 result = xiaohe_map[quan_pinyin[:2]] + xiaohe_map[quan_pinyin[2:]]
             else:
-                result =  quan_pinyin[0] + xiaohe_map[quan_pinyin[1:]]
+                result = quan_pinyin[0] + xiaohe_map[quan_pinyin[1:]]
 
-                #这里可能直接发生map错误，然后报错。
+                # 这里可能直接发生map错误，然后报错。
         except KeyError:
             raise ValueError("Invalid input: input should be a valid quanpin")
-        
+
         if len(result) != 2:
             raise ValueError("Invalid input: input should be a valid quanpin")
         else:
