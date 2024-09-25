@@ -1,6 +1,8 @@
+import re
 from typing import Dict, List
 from pypinyin import pinyin, Style
 from logger_config import setup_logger
+
 
 # 配置日志系统
 logger = setup_logger()
@@ -36,10 +38,20 @@ def quanpin_to_xiaohe(quan_pinyin: str) -> str:
             return quan_pinyin
 
         # 处理长度为3，4，5，6长度的拼音，有多种搭配方式，但是声母一般为2，3长度，韵母长度为1，2，3，4(uang这种）
-        if quan_pinyin[:2] in xiaohe_map:
-            return xiaohe_map[quan_pinyin[:2]] + xiaohe_map[quan_pinyin[2:]]
+        try:
+            if quan_pinyin[:2] in xiaohe_map:
+                result = xiaohe_map[quan_pinyin[:2]] + xiaohe_map[quan_pinyin[2:]]
+            else:
+                result =  quan_pinyin[0] + xiaohe_map[quan_pinyin[1:]]
+
+                #这里可能直接发生map错误，然后报错。
+        except KeyError:
+            raise ValueError("Invalid input: input should be a valid quanpin")
+        
+        if len(result) != 2:
+            raise ValueError("Invalid input: input should be a valid quanpin")
         else:
-            return quan_pinyin[0] + xiaohe_map[quan_pinyin[1:]]
+            return result
 
     except Exception as e:
         logger.error(f"Error converting quanpin to xiaohe: {e}")
@@ -56,6 +68,12 @@ def word_get_pinyin(word: str) -> List[str]:
         # 使用 pypinyin 获取拼音列表
         pinyin_list = pinyin(word, style=Style.NORMAL, heteronym=True)
         logger.debug(f"{word} {pinyin_list}")
+
+        filter_rule = re.compile(r"^[a-z]+$")
+
+        for item in pinyin_list:
+            if not bool(filter_rule.match(item[0])):
+                raise ValueError("PinYinTools: word_get_pinyin : Invalid input: input should be a valid Chinese word")
 
         # 返回拼音列表
         return [item[0] for item in pinyin_list]

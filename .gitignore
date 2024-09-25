@@ -6,3 +6,5 @@
 /.venv/
 config.json
 .vscode
+__pycache__/*
+tests/__pycache__/*

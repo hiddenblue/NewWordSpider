@@ -1,6 +1,8 @@
 import unittest
-from Tokenizer import filter_chinese_words
-
+from Tokenizer import filter_chinese_words, jieba_tokenizer
+from unittest.mock import patch, MagicMock
+from Tokenizer import tokenize_and_filter, jieba_tokenizer, deepseek_tokenizer
+import jieba
 
 class TestFilterChineseWords(unittest.TestCase):
     def test_filter_chinese_words(self):
@@ -110,6 +112,69 @@ class TestFilterChineseWords(unittest.TestCase):
 
         # 断言
         self.assertEqual(result, expected_result)
+
+class TestJiebaTokenizer(unittest.TestCase):
+
+    def test_jieba_tokenizer(self):
+        sentence = "这是一个测试句子"
+        expected_result = ["这是", "一个", "测试", "句子"]
+        result =  jieba_tokenizer(sentence)
+        self.assertEqual(result, expected_result)
+
+
+class TestTokenizeAndFilter(unittest.TestCase):
+
+    @patch('Tokenizer.jieba_tokenizer')
+    def test_tokenize_and_filter_jieba(self, mock_jieba_tokenizer):
+        sentence = "这是一个测试句子"
+        expected_result = {"这是", "一个", "测试", "句子"}
+        mock_jieba_tokenizer.return_value = ["这是", "一个", "测试", "句子"]
+        result = tokenize_and_filter(sentence, jieba_tokenizer)
+        self.assertEqual(result, expected_result)
+
+
+class TestLLMSplitWords(unittest.TestCase):
+
+    @patch('aiohttp.ClientSession')
+    @patch('Tokenizer.tokenize_and_filter')
+    def test_LLM_Split_words(self, mock_tokenize_and_filter, mock_session):
+        sentence_list = [
+            "这是一个测试句子",
+            "这是另一个测试句子"
+        ]
+        expected_result = {"这是", "一个", "测试", "句子", "另一个"}
+        
+        # 模拟 tokenize_and_filter 的返回值
+        mock_tokenize_and_filter.side_effect = [{"这是", "一个", "测试", "句子"}, {"这是", "另一个", "测试", "句子"}]
+
+        result = LLM_Split_words(sentence_list)
+        self.assertEqual(result, expected_result)
+
+class TestMain(unittest.TestCase):
+
+    @patch('aiohttp.ClientSession')
+    @patch('Tokenizer.tokenize_and_filter')
+    @patch('Tokenizer.jieba_tokenizer')
+    def test_main(self, mock_jieba_tokenizer, mock_tokenize_and_filter, mock_session):
+        sentence_list = [
+            "这是一个测试句子",
+            "这是另一个测试句子"
+        ]
+        expected_result_jieba = {"这是", "一个", "测试", "句子"}
+        expected_result_deepseek = {"这是", "另一个", "测试", "句子"}
+        
+        # 模拟 jieba_tokenizer 的返回值
+        mock_jieba_tokenizer.return_value = ["这是", "一个", "测试", "句子"]
+        
+        # 模拟 tokenize_and_filter 的返回值
+        mock_tokenize_and_filter.side_effect = [expected_result_jieba, expected_result_deepseek]
+
+        main()
+
+        # 验证 tokenize_and_filter 被正确调用
+        mock_tokenize_and_filter.assert_any_call(sentence_list[0], jieba_tokenizer)
+        mock_tokenize_and_filter.assert_any_call(sentence_list[1], deepseek_tokenizer, mock_session.return_value)
+
 
 if __name__ == '__main__':
     unittest.main()
