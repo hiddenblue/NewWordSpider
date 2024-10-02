@@ -18,6 +18,9 @@ class TestPinyinTools(unittest.TestCase):
         self.assertEqual(quanpin_to_xiaohe("lve"), "lt")
         self.assertEqual(quanpin_to_xiaohe("xue"), "xt")
 
+        # 特殊规则，特殊处理 ang拼音，eng拼音好像不支持
+        self.assertEqual(quanpin_to_xiaohe("ang"), "ah")
+
 
         # 测试长度为4的拼音
         self.assertEqual(quanpin_to_xiaohe("shuo"), "uo")
@@ -51,6 +54,7 @@ class TestPinyinTools(unittest.TestCase):
         self.assertEqual(word_get_pinyin("你好"), ["ni", "hao"])
         self.assertEqual(word_get_pinyin("中国"), ["zhong", "guo"])
         self.assertEqual(word_get_pinyin("战略"), ["zhan", "lve"])
+        self.assertEqual(word_get_pinyin("盎司"), ["ang", "si"])
 
         # 测试非法输入
         self.assertEqual(word_get_pinyin("123"), [])

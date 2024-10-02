@@ -37,6 +37,10 @@ def quanpin_to_xiaohe(quan_pinyin: str) -> str:
         if len(quan_pinyin) == 2:
             return quan_pinyin
 
+        # 特殊情况ang，特殊处理吧，后续看要不要分离声母和韵母
+        if quan_pinyin == "ang":
+            return "ah"
+
         # 处理长度为3，4，5，6长度的拼音，有多种搭配方式，但是声母一般为2，3长度，韵母长度为1，2，3，4(uang这种）
         try:
             if quan_pinyin[:2] in xiaohe_map:
@@ -66,7 +70,7 @@ def word_get_pinyin(word: str) -> List[str]:
     """
     try:
         # 使用 pypinyin 获取拼音列表
-        pinyin_list = pinyin(word, style=Style.NORMAL, heteronym=True)
+        pinyin_list = pinyin(word, style=Style.NORMAL, heteronym=False)
         logger.debug(f"{word} {pinyin_list}")
 
         filter_rule = re.compile(r"^[a-z]+$")
